@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "SimpleMicroNetwork.NetworkHost": {
+      "commandName": "Project"
+    }
+  }
+}

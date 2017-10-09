@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <Authors>Johannes Paul Langner</Authors>
+    <Company />
+    <Description>A simple solution to connect anything</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleMicroNetwork.NetworkData\SimpleMicroNetwork.NetworkData.csproj" />
+  </ItemGroup>
+
+</Project>
