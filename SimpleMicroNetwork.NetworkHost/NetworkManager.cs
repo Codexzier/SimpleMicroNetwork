@@ -23,6 +23,8 @@ namespace SimpleMicroNetwork.NetworkHost
 
         private bool _networkLog = false;
 
+        private int _countConnection = 0;
+
         /// <summary>
         /// Standard constructor with basic setup
         /// </summary>
@@ -66,9 +68,9 @@ namespace SimpleMicroNetwork.NetworkHost
             this.NetworkLog("memberfiled runningHost was set.");
 
             this.StartTimeout();
-            this.NetworkLog("Timeout was run");
+            this.NetworkLog("Timeout..");
 
-            return this.State == NetworkManagerState.Running;
+            return this.State == NetworkManagerState.Running || this.State == NetworkManagerState.Waiting;
         }
 
         /// <summary>
@@ -110,15 +112,10 @@ namespace SimpleMicroNetwork.NetworkHost
                 try
                 {
                     // wait to return the socket 
+                    this.State = NetworkManagerState.Waiting;
+
                     // with accepted connection to client.
-                    Socket connectToClient = this._host.Accept();
-                    this.State = NetworkManagerState.Running;
-                    this.NetworkLog("state was set to 'Running'");
-
-                    this.ListenIncomingData(connectToClient);
-
-                    connectToClient.Shutdown(SocketShutdown.Both);
-                    this.MessageShutdownEvent("connect to client has shutdown");
+                    this.WaitConnectAndPrepareNext();
                 }
                 catch (Exception ex)
                 {
@@ -128,6 +125,34 @@ namespace SimpleMicroNetwork.NetworkHost
             }
 
             this.State = NetworkManagerState.Stopped;
+        }
+
+        private void WaitConnectAndPrepareNext()
+        {
+            Task.Run(() =>
+            {
+                Socket connectToClient = this.GetAcceptSocket();
+
+                this.WaitConnectAndPrepareNext();
+
+                this.ListenIncomingData(connectToClient);
+
+                if (this._countConnection == 0)
+                {
+                    connectToClient.Shutdown(SocketShutdown.Both);
+                    this.NetworkLog("a client has diconnected");
+                }
+            });
+        }
+
+        private Socket GetAcceptSocket()
+        {
+            Socket connectToClient = this._host.Accept();
+            this.State = NetworkManagerState.Running;
+            this._countConnection++;
+            this.NetworkLog("a next client has connected");
+
+            return connectToClient;
         }
 
         /// <summary>
@@ -158,20 +183,32 @@ namespace SimpleMicroNetwork.NetworkHost
             byte[] bufferReceive = new byte[1024];
             this.NetworkLog("buffer was set");
 
-            while (connectToClient.Receive(bufferReceive, 0, bufferReceive.Length, SocketFlags.None) > 0)
+            try
             {
-                connectToClient.Send(this.GetMessageToBytes("Has Received"));
-                string receivedResult = this.TranslateReceiveMessage(bufferReceive);
-                this.MessageEvent(receivedResult.Replace('\0', ' ').Trim());
+                int countConfirm = 0;
 
-                if(this.State == NetworkManagerState.ToStop)
+                while (this.State != NetworkManagerState.ToStop && connectToClient.Receive(bufferReceive, 0, bufferReceive.Length, SocketFlags.None) > 0)
                 {
-                    break;
-                }
+                    countConfirm++;
+                    connectToClient.Send(this.GetMessageToBytes($"Host Received {DateTime.Now.Ticks}, Confirm Count: {countConfirm}\n"));
+                    string receivedResult = this.TranslateReceiveMessage(bufferReceive);
+                    this.MessageEvent(receivedResult.Replace('\0', ' ').Trim());
 
-                // reset buffer
-                bufferReceive = new byte[1024];
+                    if (this.State == NetworkManagerState.ToStop)
+                    {
+                        break;
+                    }
+
+                    // reset buffer
+                    bufferReceive = new byte[1024];
+                }
             }
+            catch(Exception e)
+            {
+                this.MessageErrorEvent(e.Message);
+            }
+
+            this._countConnection--;
         }
 
         /// <summary>

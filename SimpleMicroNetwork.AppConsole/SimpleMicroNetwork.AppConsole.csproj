@@ -5,4 +5,10 @@
     <TargetFramework>netcoreapp1.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleMicroNetwork.NetworkClient\SimpleMicroNetwork.NetworkClient.csproj" />
+    <ProjectReference Include="..\SimpleMicroNetwork.NetworkData\SimpleMicroNetwork.NetworkData.csproj" />
+    <ProjectReference Include="..\SimpleMicroNetwork.NetworkHost\SimpleMicroNetwork.NetworkHost.csproj" />
+  </ItemGroup>
+
 </Project>

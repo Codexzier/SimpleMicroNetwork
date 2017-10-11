@@ -1,0 +1,52 @@
+﻿#include <SPI.h>
+#include <Ethernet.h>
+
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x00, 0x91, 0x8C }; 
+byte ip[] = {192,168,20,99};
+byte serverip[] = {192,168,20,69};
+
+EthernetClient client;
+
+int counter = 1;
+
+int counterTimeoutResponse = 0;
+boolean swi = true;
+
+void setup() {
+  Ethernet.begin(mac, ip);
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("connecting...");
+
+  if(client.connect(serverip, 1200)) {
+
+    Serial.println("Connected");
+  }
+}
+
+void loop() {
+  if(client.available()) {
+    char c = client.read(); 
+    Serial.print(c);
+  }
+  else {
+    String c1 = String("Arduino: Das ist Nachricht ");
+    String content = c1 + counter;
+    client.print(content);
+    client.flush();
+    
+    counter++;
+    delay(2000);
+  }
+
+  if(!client.connected()) {
+    Serial.println("disconnecting 1");
+    client.stop();
+
+    delay(1000);
+    Serial.println("Renew connect");
+    if(client.connect(serverip,1200)) {
+      Serial.println("Connected");
+    }
+  }
+}

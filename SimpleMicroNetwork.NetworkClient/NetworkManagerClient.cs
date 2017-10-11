@@ -63,6 +63,7 @@ namespace SimpleMicroNetwork.NetworkClient
             //SocketAsyncEventArgs socketEvent = this.CreateOperationEvent(this._socket.RemoteEndPoint);
             //socketEvent.SetBuffer((byte[])obj, 0, ((byte[])obj).Length);
             //this._socket.SendAsync(socketEvent);
+
             int resultSend = this._socket.Send((byte[])obj);
 
             this._clientDone.WaitOne(this._timeout);
@@ -142,12 +143,12 @@ namespace SimpleMicroNetwork.NetworkClient
             this.NetworkMessage?.Invoke(this, new NetworkMessageEventArgs(message));
         }
 
-        public delegate void NetworkMessangeWasSendEventHandler(object sender, NetworkMessageEventArgs e);
-        public event NetworkMessangeWasSendEventHandler NetworkMessangeWasSendEvent;
+        //public delegate void NetworkMessageWasSendEventHandler(object sender, NetworkMessageEventArgs e);
+        //public event NetworkMessageWasSendEventHandler NetworkMessangeWasSendEvent;
 
-        public virtual void MessageWasSend(string message)
-        {
-            this.NetworkMessangeWasSendEvent?.Invoke(this, new NetworkMessageEventArgs(message));
-        }
+        //public virtual void MessageWasSend(string message)
+        //{
+        //    this.NetworkMessangeWasSendEvent?.Invoke(this, new NetworkMessageEventArgs(message));
+        //}
     }
 }
