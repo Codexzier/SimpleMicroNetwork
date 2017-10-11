@@ -1,27 +1,27 @@
 ﻿#include <SPI.h>
 #include <Ethernet.h>
 
+// random mac adress
 byte mac[] = { 0x90, 0xA2, 0xDA, 0x00, 0x91, 0x8C }; 
+
+// set the client IP Adress
 byte ip[] = {192,168,20,99};
+
+// set the server adresse 
+//(ip adress of your open console application)
 byte serverip[] = {192,168,20,69};
 
+// network class for connecting to the server
 EthernetClient client;
 
+// only to show the count of loop runs
 int counter = 1;
-
-int counterTimeoutResponse = 0;
-boolean swi = true;
 
 void setup() {
   Ethernet.begin(mac, ip);
   Serial.begin(115200);
-  delay(1000);
-  Serial.println("connecting...");
 
-  if(client.connect(serverip, 1200)) {
-
-    Serial.println("Connected");
-  }
+  tryConnectToServer();
 }
 
 void loop() {
@@ -39,14 +39,37 @@ void loop() {
     delay(2000);
   }
 
+  checkForReconnect();
+}
+
+// if disconnected, so after it try to reconnect to server.
+void checkForReconnect() {
   if(!client.connected()) {
-    Serial.println("disconnecting 1");
+    Serial.println("disconnecting");
     client.stop();
 
     delay(1000);
-    Serial.println("Renew connect");
-    if(client.connect(serverip,1200)) {
+    tryConnectToServer();
+  }
+}
+
+void tryConnectToServer() {
+
+  Serial.println("connecting...");
+  bool runTryToConnect = true;
+
+  while(runTryToConnect) {
+    
+    if(client.connect(serverip, 1200)) {
       Serial.println("Connected");
+
+      // end the setup
+      runTryToConnect = false;
+    }
+    else {
+      Serial.println("wait...");
+      delay(1000);
+      Serial.println("try to connect again...");
     }
   }
 }
