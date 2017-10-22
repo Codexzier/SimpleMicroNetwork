@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SimpleMicroNetwork.NetworkClient
 {
@@ -22,17 +23,38 @@ namespace SimpleMicroNetwork.NetworkClient
 
         private bool _waitForConnect = false;
 
+
+        public delegate void IsConnectedEventHandler(bool isConnected);
+        public IsConnectedEventHandler IsConnectedEvent;
+
         public string Connect(int port)
         {
             this._socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
+            
             // Operations event Erzeugen und Verbindung herstellen, die asynchron verläuft
-            this._socket.ConnectAsync(this.CreateOperationEvent(new DnsEndPoint("127.0.0.1", port)));
-
+            bool result = this._socket.ConnectAsync(this.CreateOperationEvent(new DnsEndPoint("192.168.20.65", port)));
+  
+            this.IsConnectedEvent?.Invoke(result);
+            
             // Blockiert den Thread in Millisekunden.
             this._clientDone.WaitOne(this._timeout);
 
             return this._operationResult;
+        }
+
+        public delegate void ReceivedMessageEventHandler(string message);
+        public event ReceivedMessageEventHandler ReceivedMessageEvent;
+
+        private void NetworkListener()
+        {
+            byte[] bufferReceiver = new byte[1023];
+
+            while (this._socket.Receive(bufferReceiver, 0, bufferReceiver.Length, SocketFlags.None) > 0)
+            {
+                this.ReceivedMessageEvent(Encoding.UTF8.GetString(bufferReceiver));
+
+                bufferReceiver = new byte[1023];
+            }
         }
 
         public void Send(byte[] data)
@@ -60,16 +82,9 @@ namespace SimpleMicroNetwork.NetworkClient
 
         private void Send_InThread(object obj)
         {
-            //SocketAsyncEventArgs socketEvent = this.CreateOperationEvent(this._socket.RemoteEndPoint);
-            //socketEvent.SetBuffer((byte[])obj, 0, ((byte[])obj).Length);
-            //this._socket.SendAsync(socketEvent);
-
             int resultSend = this._socket.Send((byte[])obj);
-
             this._clientDone.WaitOne(this._timeout);
-
             this.MessageEvent("(" + this._operationResult + ") " + this._message);
-
             this._waitForConnect = true;
         }
 
@@ -84,6 +99,7 @@ namespace SimpleMicroNetwork.NetworkClient
                 if (e.Buffer != null)
                 {
                     this._message = Encoding.ASCII.GetString(e.Buffer);
+                    Debug.WriteLine(this._message);
                 }
 
                 // Ruft das Ergebnis der Anfrage
@@ -142,13 +158,5 @@ namespace SimpleMicroNetwork.NetworkClient
         {
             this.NetworkMessage?.Invoke(this, new NetworkMessageEventArgs(message));
         }
-
-        //public delegate void NetworkMessageWasSendEventHandler(object sender, NetworkMessageEventArgs e);
-        //public event NetworkMessageWasSendEventHandler NetworkMessangeWasSendEvent;
-
-        //public virtual void MessageWasSend(string message)
-        //{
-        //    this.NetworkMessangeWasSendEvent?.Invoke(this, new NetworkMessageEventArgs(message));
-        //}
     }
 }

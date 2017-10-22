@@ -1,0 +1,175 @@
+﻿#include <WiFi.h>
+#include <Wire.h>  
+#include "SSD1306.h"
+
+const char* ssid     = "my wlan ssid";
+const char* password = "my lwan password";
+
+const char* host = "target server";
+const char* streamId   = "....................";
+const char* privateKey = "....................";
+
+WiFiClient mClient;
+SSD1306  mDisplay(0x3c, 5, 4);
+IPAddress mIpaddress;
+
+int mCounter = 0;
+String mLastReceived;
+
+void setup()
+{
+  Serial.begin(115200);
+  
+  // OLED Display
+  mDisplay.init();
+  mDisplay.flipScreenVertically();
+  mDisplay.setTextAlignment(TEXT_ALIGN_LEFT);
+  mDisplay.setFont(ArialMT_Plain_10);
+
+  mDisplay.clear();
+  
+  WriteToOled(0, 0, String("WiFi connecting to "), false);
+  WriteToOled(0, 10, String(ssid), false);
+
+  int counting = 0;
+  int progress = (counting / 5) % 100;
+  mDisplay.drawProgressBar(0, 32, 120, 10, progress);
+  mDisplay.display();
+  delay(1000);
+  
+  Serial.println();
+  Serial.println();
+  Serial.print("WiFi connecting to ");
+  Serial.println(ssid);
+  
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+      int progress = counting % 100;
+      mDisplay.setColor(WHITE);
+      mDisplay.drawProgressBar(0, 32, 120, 10, progress);
+      mDisplay.display();
+      delay(500);
+      Serial.print(".");
+      counting++;
+  }
+
+  delay(500);
+
+  mDisplay.clear();
+
+  mIpaddress = WiFi.localIP();
+  WriteToOled(0, 0, String("WiFi connected with IP: "), false);
+  writeIpAddress(0, 10);
+  mDisplay.display();
+  
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(mIpaddress);
+
+  delay(2000);
+  
+  tryToConnectToServer();
+
+  mLastReceived = "Nichts";
+  mDisplay.clear();
+}
+
+void writeIpAddress(int x, int y) {
+  String wifiIp = String(mIpaddress[0]) + "." + String(mIpaddress[1]) + 
+  "." + String(mIpaddress[2]) + "." + String(mIpaddress[3]);
+  WriteToOled(x, y, wifiIp, false);
+}
+
+void loop()
+{
+  while(mClient.available()) {
+    
+    String received = mClient.readStringUntil('\r');
+    Serial.print(received);
+
+    WriteToOled(0, 0, mLastReceived, true);
+    WriteToOled(0, 0, received, false);
+    mLastReceived = received;
+  }
+
+  String wifiIp = String(mIpaddress[0]) + "." + String(mIpaddress[1]) + 
+    "." + String(mIpaddress[2]) + "." + String(mIpaddress[3]);
+  String strCount2 = "Count: " + String(mCounter);
+  String strContent = "From IP: " +  wifiIp + ", " + strCount2;
+  
+  WriteToOled(0, 10, "IP: " +  wifiIp, false);
+  WriteToOled(0, 20, strCount2, false);
+  Serial.println(strCount2);
+  mDisplay.display();
+  mClient.print(strContent);
+  delay(2000);
+  
+  if (!mClient.connected()) {
+        mDisplay.clear();
+        WriteToOled(0, 0, ">>> Client Timeout !", false);   
+        Serial.println(">>> Client Timeout !");
+        mClient.stop(); 
+        WriteToOled(0, 10, "Client stop", false);
+        mDisplay.display();
+        delay(2000);
+        tryToConnectToServer();
+        mDisplay.clear();
+  }
+
+  //WriteToOled(0, 10, "IP: " +  wifiIp, true);
+  WriteToOled(0, 20, strCount2, true);
+  mDisplay.display();
+  mCounter++;
+}
+
+void tryToConnectToServer() {
+
+  mDisplay.clear();
+
+  WriteToOled(0, 0, "connecting...", false);
+
+  int counting = 0;
+  int progress = (counting / 5) % 100;
+  mDisplay.drawProgressBar(0, 32, 120, 10, progress);
+  mDisplay.display();
+
+  delay(500);
+  
+  Serial.println("connecting...");
+  bool runTryToConnect = true;
+  while(runTryToConnect) {
+    
+    if (mClient.connect(host, 1200)) {
+      WriteToOled(0, 10, "Connected", false);
+      mDisplay.display();
+      runTryToConnect = false;
+      delay(2000);
+    }
+    else {
+      Serial.println("wait...");
+      
+      int progress = (counting / 5) % 100;
+      mDisplay.setColor(WHITE);
+      mDisplay.drawProgressBar(0, 32, 120, 10, progress);
+      mDisplay.display();
+      counting++;
+      delay(1000);
+      Serial.println("try to connect again...");
+    }
+
+    delay(500);
+  }
+}
+
+void WriteToOled(int x, int y, String text, bool clr) {
+  if(clr) {
+    mDisplay.setColor(BLACK);
+  }
+  else {
+    mDisplay.setColor(WHITE);
+  }
+
+  mDisplay.drawString(x, y, text);
+}

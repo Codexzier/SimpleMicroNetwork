@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
-    <Authors>Johannes Paul Langner</Authors>
-    <Company />
-    <Description>A simple solution to connect anything</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SimpleMicroNetwork.NetworkConverter\SimpleMicroNetwork.NetworkConverter.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SimpleMicroNetwork.NetworkData\SimpleMicroNetwork.NetworkData.csproj" />
   </ItemGroup>
 

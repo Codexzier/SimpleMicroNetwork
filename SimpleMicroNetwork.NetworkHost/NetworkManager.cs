@@ -191,8 +191,8 @@ namespace SimpleMicroNetwork.NetworkHost
                 {
                     countConfirm++;
                     connectToClient.Send(this.GetMessageToBytes($"Host Received {DateTime.Now.Ticks}, Confirm Count: {countConfirm}\n"));
-                    string receivedResult = this.TranslateReceiveMessage(bufferReceive);
-                    this.MessageEvent(receivedResult.Replace('\0', ' ').Trim());
+
+                    this.AllocateReceived(bufferReceive);
 
                     if (this.State == NetworkManagerState.ToStop)
                     {
@@ -209,6 +209,12 @@ namespace SimpleMicroNetwork.NetworkHost
             }
 
             this._countConnection--;
+        }
+
+        private void AllocateReceived(byte[] bufferReceive)
+        {
+            string receivedResult = this.TranslateReceiveMessage(bufferReceive);
+            this.MessageEvent(receivedResult.Replace('\0', ' ').Trim());
         }
 
         /// <summary>

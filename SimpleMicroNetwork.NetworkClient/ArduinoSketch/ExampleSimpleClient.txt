@@ -30,7 +30,9 @@ void loop() {
     Serial.print(c);
   }
   else {
-    String c1 = String("Arduino: Das ist Nachricht ");
+    String ipAddress = String(ip[0]) + "." + String(ip[1]) + "." + 
+      String(ip[2]) + "." + String(ip[3]);
+    String c1 = String("From Ip: ") + ipAddress + ", Count: ";
     String content = c1 + counter;
     client.print(content);
     client.flush();
