@@ -1,4 +1,4 @@
-# NOT FINSIH Project
+NOT FINSIH Project
 
 # SimpleMicroNetwork
 A simple network host for connecting arduino with ethernet.
