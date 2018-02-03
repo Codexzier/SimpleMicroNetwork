@@ -1,4 +1,11 @@
-NOT FINSIH Project
+# Development Status
+Test and PoC Level
+
+# Open Things
+- Backlog
+- JSON
+- Client Example for Wemos, Arduino, Netduino and Gadgeteer
+- Diffrent Network Communications
 
 # SimpleMicroNetwork
 A simple network host for connecting arduino with ethernet.
